@@ -10,7 +10,7 @@
 <meta name="theme-color" content="#1f9d55">
 
 <style>
-:root{--bg:#f4f7f2;--ink:#14231a;--card:#fff;--line:#d8e2d6;--green:#1f9d55;--lime:#c6f432;--mute:#6b7d70;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+:root{--bg:#f4f7f2;--ink:#14231a;--card:#fff;--line:#d8e2d6;--green:#1f9d55;--blue:#2f7df6;--lime:#c6f432;--mute:#6b7d70;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
 @media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#0e1a13;--ink:#eaf5ec;--card:#16271c;--line:#27402f;--mute:#8fa597}}
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
 body{margin:0;background:var(--bg);color:var(--ink);font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
@@ -24,18 +24,36 @@ h1{font-size:26px;margin:4px 0 14px;letter-spacing:-.5px}
 .d{aspect-ratio:1;border-radius:12px;border:1px solid var(--line);background:var(--card);color:var(--ink);font:600 15px inherit;font-family:inherit;padding:0;position:relative}
 .d.empty{border:0;background:none}
 .d.today{outline:2px solid var(--green)}
-.d.on{background:var(--green);border-color:var(--green);color:#fff}
-.d.on::after{content:"✓";position:absolute;right:5px;top:2px;font-size:11px}
+.d.run,.d.walk{color:#fff}
+.d.run{background:var(--green);border-color:var(--green)}
+.d.walk{background:var(--blue);border-color:var(--blue)}
+.d.run::after,.d.walk::after{content:"✓";position:absolute;right:5px;top:2px;font-size:11px}
 .d.future{opacity:.4}
 .big{width:100%;border:0;border-radius:16px;padding:18px;font:800 19px inherit;font-family:inherit;background:var(--lime);color:#14231a;margin-bottom:16px}
 .big.done{background:var(--card);color:var(--ink);border:2px solid var(--green)}
+.big.done.walk{border-color:var(--blue)}
 .stats{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:18px}
 .st{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:14px}
 .st b{display:block;font-size:30px;line-height:1.1}
 .st span{font-size:13px;color:var(--mute)}
 h2{font-size:16px;margin:0 0 8px}
 .bar{display:flex;align-items:center;gap:8px;margin-bottom:6px;font-size:13px}
-.bar i{display:block;height:14px;border-radius:7px;background:var(--green);min-width:3px}
+.seg{display:flex;height:14px;border-radius:7px;overflow:hidden;min-width:3px}
+.seg.z{background:var(--line);width:3px!important}
+.seg i{display:block;height:14px;background:var(--green)}
+.seg i.w{background:var(--blue)}
+.leg{font-size:13px;color:var(--mute);margin-bottom:8px}
+.leg b{display:inline-block;width:10px;height:10px;border-radius:5px;margin:0 4px 0 8px}
+.leg b:first-child{margin-left:0}
+#sheet{position:fixed;inset:0;z-index:50;background:rgba(0,0,0,.45);display:none;align-items:flex-end}
+#sheet.open{display:flex}
+.sh{width:100%;max-width:480px;margin:0 auto;background:var(--card);border-radius:22px 22px 0 0;padding:18px 16px calc(18px + env(safe-area-inset-bottom,0px))}
+.sh h3{margin:0 0 12px;font-size:17px}
+.opt{display:block;width:100%;border:0;border-radius:14px;padding:16px;margin-bottom:8px;font-weight:700;font-size:17px;font-family:inherit;color:#fff}
+.opt.run{background:var(--green)}
+.opt.walk{background:var(--blue)}
+.opt.clr{background:none;color:#d64545;border:1px solid var(--line)}
+.opt.cancel{background:var(--bg);color:var(--ink)}
 .bar em{font-style:normal;width:64px;color:var(--mute);text-transform:capitalize}
 #splash{position:fixed;inset:0;z-index:99;background:#000;color:#fff;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:24px;transition:opacity .5s ease}
 #splash.hide{opacity:0;pointer-events:none}
@@ -55,19 +73,30 @@ h2{font-size:16px;margin:0 0 8px}
 <div class="grid" id="dows"></div>
 <div class="grid" id="cal"></div>
 <div class="stats">
-  <div class="st"><b id="sCount">0</b><span>пробежек за месяц</span></div>
-  <div class="st"><b id="sPct">0%</b><span>дней с пробежкой</span></div>
+  <div class="st"><b id="sRun" style="color:var(--green)">0</b><span>пробежек за месяц</span></div>
+  <div class="st"><b id="sWalk" style="color:var(--blue)">0</b><span>прогулок за месяц</span></div>
+  <div class="st"><b id="sPct">0%</b><span>дней с активностью</span></div>
+  <div class="st"><b id="sAll">0</b><span>активных дней</span></div>
   <div class="st"><b id="sStreak">0</b><span>серия сейчас</span></div>
   <div class="st"><b id="sBest">0</b><span>лучшая серия</span></div>
 </div>
 <h2>Последние месяцы</h2>
+<div class="leg"><b style="background:var(--green)"></b>бег<b style="background:var(--blue)"></b>ходьба</div>
 <div id="hist"></div>
 </main>
+<div id="sheet"><div class="sh"><h3 id="shTitle"></h3>
+<button class="opt run" onclick="pick('run')">🏃 Бег</button>
+<button class="opt walk" onclick="pick('walk')">🚶 Ходьба</button>
+<button class="opt clr" id="shClear" onclick="pick(null)">Убрать отметку</button>
+<button class="opt cancel" onclick="closeSheet()">Отмена</button></div></div>
 <script>
-const KEY='run-days';
-let days=new Set();
-try{days=new Set(JSON.parse(localStorage.getItem(KEY)||'[]'))}catch(e){}
-function save(){try{localStorage.setItem(KEY,JSON.stringify([...days]))}catch(e){}}
+const KEY='activity-days';
+let acts={};
+try{const raw=localStorage.getItem(KEY);
+  if(raw){acts=JSON.parse(raw)||{}}
+  else{const old=JSON.parse(localStorage.getItem('run-days')||'[]');old.forEach(k=>{acts[k]='run'});localStorage.setItem(KEY,JSON.stringify(acts))}
+}catch(e){}
+function save(){try{localStorage.setItem(KEY,JSON.stringify(acts))}catch(e){}}
 const pad=n=>String(n).padStart(2,'0');
 const key=(y,m,d)=>y+'-'+pad(m+1)+'-'+pad(d);
 const now=new Date(),todayKey=key(now.getFullYear(),now.getMonth(),now.getDate());
@@ -75,42 +104,55 @@ let vy=now.getFullYear(),vm=now.getMonth();
 const $=id=>document.getElementById(id);
 const mname=(y,m)=>new Date(y,m,1).toLocaleDateString('ru-RU',{month:'long',year:'numeric'});
 $('dows').innerHTML=['Пн','Вт','Ср','Чт','Пт','Сб','Вс'].map(d=>'<div class="dow">'+d+'</div>').join('');
-function toggle(k){days.has(k)?days.delete(k):days.add(k);save();render()}
+let sheetKey=null;
+function openSheet(k){
+  sheetKey=k;const[y,m,d]=k.split('-');
+  $('shTitle').textContent=new Date(+y,+m-1,+d).toLocaleDateString('ru-RU',{day:'numeric',month:'long'});
+  $('shClear').style.display=acts[k]?'block':'none';
+  $('sheet').classList.add('open');
+}
+function closeSheet(){$('sheet').classList.remove('open')}
+function pick(t){if(t)acts[sheetKey]=t;else delete acts[sheetKey];save();closeSheet();render()}
+$('sheet').onclick=e=>{if(e.target===$('sheet'))closeSheet()};
 function streaks(){
-  const arr=[...days].sort();let best=0,run=0,prev=null;
+  const arr=Object.keys(acts).sort();let best=0,run=0,prev=null;
   for(const k of arr){const t=new Date(k+'T12:00:00');
     run=(prev&&Math.round((t-prev)/864e5)===1)?run+1:1;best=Math.max(best,run);prev=t}
   let cur=0,t=new Date();t.setHours(12,0,0,0);
-  if(!days.has(todayKey))t.setDate(t.getDate()-1);
-  while(days.has(key(t.getFullYear(),t.getMonth(),t.getDate()))){cur++;t.setDate(t.getDate()-1)}
+  if(!acts[todayKey])t.setDate(t.getDate()-1);
+  while(acts[key(t.getFullYear(),t.getMonth(),t.getDate())]){cur++;t.setDate(t.getDate()-1)}
   return[cur,best];
 }
-function countMonth(y,m){let c=0;const n=new Date(y,m+1,0).getDate();
-  for(let d=1;d<=n;d++)if(days.has(key(y,m,d)))c++;return c}
+function countMonth(y,m,type){let c=0;const n=new Date(y,m+1,0).getDate();
+  for(let d=1;d<=n;d++){const a=acts[key(y,m,d)];if(a&&(!type||a===type))c++}return c}
 function render(){
   $('title').textContent=mname(vy,vm);
   const first=(new Date(vy,vm,1).getDay()+6)%7,n=new Date(vy,vm+1,0).getDate();
   let h='';for(let i=0;i<first;i++)h+='<div class="d empty"></div>';
   for(let d=1;d<=n;d++){const k=key(vy,vm,d);
     const fut=k>todayKey;
-    h+='<button class="d'+(days.has(k)?' on':'')+(k===todayKey?' today':'')+(fut?' future':'')+'" data-k="'+k+'"'+(fut?' disabled':'')+'>'+d+'</button>'}
+    h+='<button class="d'+(acts[k]?' '+acts[k]:'')+(k===todayKey?' today':'')+(fut?' future':'')+'" data-k="'+k+'"'+(fut?' disabled':'')+'>'+d+'</button>'}
   $('cal').innerHTML=h;
-  const c=countMonth(vy,vm);
+  const r=countMonth(vy,vm,'run'),w=countMonth(vy,vm,'walk'),c=r+w;
   const isCur=vy===now.getFullYear()&&vm===now.getMonth();
   const elapsed=isCur?now.getDate():n;
-  $('sCount').textContent=c;$('sPct').textContent=Math.round(c/elapsed*100)+'%';
+  $('sRun').textContent=r;$('sWalk').textContent=w;$('sAll').textContent=c;
+  $('sPct').textContent=Math.round(c/elapsed*100)+'%';
   const[cur,best]=streaks();$('sStreak').textContent=cur;$('sBest').textContent=best;
-  const done=days.has(todayKey);
-  $('big').textContent=done?'✓ Сегодня отмечено (нажми, чтобы снять)':'✓ Сегодня бегал(а)';
-  $('big').className='big'+(done?' done':'');
+  const t=acts[todayKey];
+  $('big').textContent=t?'✓ Сегодня: '+(t==='run'?'бег':'ходьба')+' (изменить)':'✓ Отметить сегодня';
+  $('big').className='big'+(t?' done '+t:'');
   const rows=[];let max=1;
   for(let i=5;i>=0;i--){const dt=new Date(now.getFullYear(),now.getMonth()-i,1);
-    const cnt=countMonth(dt.getFullYear(),dt.getMonth());max=Math.max(max,cnt);
-    rows.push([dt.toLocaleDateString('ru-RU',{month:'short'}),cnt])}
-  $('hist').innerHTML=rows.map(r=>'<div class="bar"><em>'+r[0]+'</em><i style="width:'+(r[1]/max*60)+'%"></i><span>'+r[1]+'</span></div>').join('');
+    const y=dt.getFullYear(),m=dt.getMonth();
+    const rc=countMonth(y,m,'run'),wc=countMonth(y,m,'walk');max=Math.max(max,rc+wc);
+    rows.push([dt.toLocaleDateString('ru-RU',{month:'short'}),rc,wc])}
+  $('hist').innerHTML=rows.map(x=>{const tot=x[1]+x[2];
+    const seg=tot?'<div class="seg" style="width:'+(tot/max*60)+'%"><i style="flex:'+x[1]+'"></i><i class="w" style="flex:'+x[2]+'"></i></div>':'<div class="seg z"></div>';
+    return '<div class="bar"><em>'+x[0]+'</em>'+seg+'<span>'+tot+'</span></div>'}).join('');
 }
-$('cal').onclick=e=>{const k=e.target.dataset&&e.target.dataset.k;if(k)toggle(k)};
-$('big').onclick=()=>toggle(todayKey);
+$('cal').onclick=e=>{const k=e.target.dataset&&e.target.dataset.k;if(k)openSheet(k)};
+$('big').onclick=()=>openSheet(todayKey);
 $('prev').onclick=()=>{vm--;if(vm<0){vm=11;vy--}render()};
 $('next').onclick=()=>{vm++;if(vm>11){vm=0;vy++}render()};
 render();
