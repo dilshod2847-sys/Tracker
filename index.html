@@ -38,10 +38,16 @@ h1{font-size:26px;margin:4px 0 14px;letter-spacing:-.5px}
 .st span{font-size:13px;color:var(--mute)}
 h2{font-size:16px;margin:0 0 8px}
 .bar{display:flex;align-items:center;gap:8px;margin-bottom:6px;font-size:13px}
-.seg{display:flex;height:14px;border-radius:7px;overflow:hidden;min-width:3px}
+.seg{display:flex;height:20px;border-radius:10px;overflow:hidden;min-width:3px}
 .seg.z{background:var(--line);width:3px!important}
-.seg i{display:block;height:14px;background:var(--green)}
+.seg i{display:block;height:20px;line-height:20px;font-style:normal;font-size:11px;font-weight:700;color:#fff;text-align:center;white-space:nowrap;overflow:hidden;background:var(--green)}
 .seg i.w{background:var(--blue)}
+.seg i.m{background:#e5484d}
+.st.wide{grid-column:1/-1}
+.rl{display:flex;justify-content:space-between;margin:6px 0 10px}
+.rl b{display:inline;font-size:20px}
+.seg.thick{height:14px;border-radius:7px}
+.seg.thick i{height:14px}
 .leg{font-size:13px;color:var(--mute);margin-bottom:8px}
 .leg b{display:inline-block;width:10px;height:10px;border-radius:5px;margin:0 4px 0 8px}
 .leg b:first-child{margin-left:0}
@@ -79,9 +85,10 @@ h2{font-size:16px;margin:0 0 8px}
   <div class="st"><b id="sAll">0</b><span>активных дней</span></div>
   <div class="st"><b id="sStreak">0</b><span>серия сейчас</span></div>
   <div class="st"><b id="sBest">0</b><span>лучшая серия</span></div>
+  <div class="st wide"><span>Соотношение за месяц</span><div id="ratio"></div></div>
 </div>
 <h2>Последние месяцы</h2>
-<div class="leg"><b style="background:var(--green)"></b>бег<b style="background:var(--blue)"></b>ходьба</div>
+<div class="leg"><b style="background:var(--green)"></b>бег<b style="background:var(--blue)"></b>ходьба<b style="background:#e5484d"></b>пропуск</div>
 <div id="hist"></div>
 </main>
 <div id="sheet"><div class="sh"><h3 id="shTitle"></h3>
@@ -138,18 +145,28 @@ function render(){
   const elapsed=isCur?now.getDate():n;
   $('sRun').textContent=r;$('sWalk').textContent=w;$('sAll').textContent=c;
   $('sPct').textContent=Math.round(c/elapsed*100)+'%';
+  if(c){const rp=Math.round(r/c*100),wp=100-rp;
+    $('ratio').innerHTML='<div class="rl"><b style="color:var(--green)">🏃 Бег '+rp+'%</b><b style="color:var(--blue)">🚶 Ходьба '+wp+'%</b></div><div class="seg thick">'+(r?'<i style="flex:'+r+'"></i>':'')+(w?'<i class="w" style="flex:'+w+'"></i>':'')+'</div>'}
+  else{$('ratio').innerHTML='<div class="rl"><b style="color:var(--mute)">Пока нет отметок</b></div>'}
   const[cur,best]=streaks();$('sStreak').textContent=cur;$('sBest').textContent=best;
   const t=acts[todayKey];
   $('big').textContent=t?'✓ Сегодня: '+(t==='run'?'бег':'ходьба')+' (изменить)':'✓ Отметить сегодня';
   $('big').className='big'+(t?' done '+t:'');
+  const startKey=Object.keys(acts).sort()[0]||null;
+  function mstat(y,m){const n=new Date(y,m+1,0).getDate();let r=0,w=0,x=0;
+    for(let d=1;d<=n;d++){const k=key(y,m,d);if(k>todayKey)break;
+      if(acts[k]==='run')r++;else if(acts[k]==='walk')w++;
+      else if(startKey&&k>=startKey&&k<todayKey)x++}
+    return[r,w,x]}
   const rows=[];let max=1;
   for(let i=5;i>=0;i--){const dt=new Date(now.getFullYear(),now.getMonth()-i,1);
-    const y=dt.getFullYear(),m=dt.getMonth();
-    const rc=countMonth(y,m,'run'),wc=countMonth(y,m,'walk');max=Math.max(max,rc+wc);
-    rows.push([dt.toLocaleDateString('ru-RU',{month:'short'}),rc,wc])}
-  $('hist').innerHTML=rows.map(x=>{const tot=x[1]+x[2];
-    const seg=tot?'<div class="seg" style="width:'+(tot/max*60)+'%"><i style="flex:'+x[1]+'"></i><i class="w" style="flex:'+x[2]+'"></i></div>':'<div class="seg z"></div>';
-    return '<div class="bar"><em>'+x[0]+'</em>'+seg+'<span>'+tot+'</span></div>'}).join('');
+    const st=mstat(dt.getFullYear(),dt.getMonth());max=Math.max(max,st[0]+st[1]+st[2]);
+    rows.push([dt.toLocaleDateString('ru-RU',{month:'short'}),st[0],st[1],st[2]])}
+  $('hist').innerHTML=rows.map(x=>{const tot=x[1]+x[2]+x[3];
+    if(!tot)return '<div class="bar"><em>'+x[0]+'</em><div class="seg z"></div><span>0</span></div>';
+    const rp=Math.round(x[1]/tot*100),wp=Math.round(x[2]/tot*100),mp=Math.max(0,100-rp-wp);
+    const part=(v,p,c)=>v?'<i'+(c?' class="'+c+'"':'')+' style="flex:'+v+'">'+p+'%</i>':'';
+    return '<div class="bar"><em>'+x[0]+'</em><div class="seg" style="width:'+(tot/max*60)+'%">'+part(x[1],rp,'')+part(x[2],wp,'w')+part(x[3],mp,'m')+'</div><span>'+(x[1]+x[2])+'</span></div>'}).join('');
 }
 $('cal').onclick=e=>{const k=e.target.dataset&&e.target.dataset.k;if(k)openSheet(k)};
 $('big').onclick=()=>openSheet(todayKey);
