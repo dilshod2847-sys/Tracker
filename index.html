@@ -66,12 +66,14 @@ h2{font-size:16px;margin:0 0 8px}
 #splash img{width:112px;height:112px;border-radius:26px;margin-bottom:22px;animation:sp .7s ease both}
 #splash h2{font-size:28px;margin:0 0 8px;letter-spacing:-.5px;animation:sp .7s .15s ease both}
 #splash p{margin:0;font-size:17px;color:#9be15d;animation:sp .7s .3s ease both}
+#splash .ig{position:absolute;left:0;right:0;bottom:calc(40px + env(safe-area-inset-bottom,0px));display:flex;align-items:center;justify-content:center;gap:8px;font-size:16px;color:#cfd8d2;animation:sp .7s .5s ease both}
 @keyframes sp{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:none}}
 @media (prefers-reduced-motion:reduce){#splash *{animation:none!important}}
 </style>
 </head>
 <body>
-<div id="splash"><img src="icon-192.png" alt=""><h2 id="spTitle"></h2><p id="spSub"></p></div>
+<div id="splash"><img src="icon-192.png" alt=""><h2 id="spTitle"></h2><p id="spSub"></p>
+<div class="ig"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="url(#igg)" stroke-width="2" aria-hidden="true"><defs><linearGradient id="igg" x1="0" y1="1" x2="1" y2="0"><stop offset="0" stop-color="#fdc468"/><stop offset=".5" stop-color="#df4996"/><stop offset="1" stop-color="#4f5bd5"/></linearGradient></defs><rect x="3" y="3" width="18" height="18" rx="5"/><circle cx="12" cy="12" r="4"/><circle cx="17.5" cy="6.5" r="1" fill="url(#igg)" stroke="none"/></svg><span>@thedilshod_</span></div></div>
 <main>
 <h1>Трекер пробежек</h1>
 <button class="big" id="big"></button>
