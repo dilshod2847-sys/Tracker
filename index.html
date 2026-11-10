@@ -10,7 +10,7 @@
 <meta name="theme-color" content="#1f9d55">
 
 <style>
-:root{--bg:#f4f7f2;--ink:#14231a;--card:#fff;--line:#d8e2d6;--green:#1f9d55;--blue:#2f7df6;--lime:#c6f432;--mute:#6b7d70;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+:root{--bg:#f4f7f2;--ink:#14231a;--card:#fff;--line:#d8e2d6;--green:#1f9d55;--blue:#2f7df6;--orange:#f08a24;--lime:#c6f432;--mute:#6b7d70;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
 @media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#0e1a13;--ink:#eaf5ec;--card:#16271c;--line:#27402f;--mute:#8fa597}}
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
 body{margin:0;background:var(--bg);color:var(--ink);font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
@@ -24,16 +24,19 @@ h1{font-size:26px;margin:4px 0 14px;letter-spacing:-.5px}
 .d{aspect-ratio:1;border-radius:12px;border:1px solid var(--line);background:var(--card);color:var(--ink);font:600 15px inherit;font-family:inherit;padding:0;position:relative}
 .d.empty{border:0;background:none}
 .d.today{outline:2px solid var(--green)}
-.d.run,.d.walk{color:#fff}
+.d.run,.d.walk,.d.football{color:#fff}
 .d.run{background:var(--green);border-color:var(--green)}
 .d.walk{background:var(--blue);border-color:var(--blue)}
+.d.football{background:var(--orange);border-color:var(--orange)}
 .d.miss{background:#e5484d;border-color:#e5484d;color:#fff}
-.d.run::after,.d.walk::after,.d.miss::after{content:"✓";position:absolute;right:5px;top:2px;font-size:11px}
+.d.run::after,.d.walk::after,.d.football::after,.d.miss::after{content:"✓";position:absolute;right:5px;top:2px;font-size:11px}
 .d.miss::after{content:"✕"}
+.d.football::after{content:"⚽";font-size:14px;right:3px;top:0}
 .d.future{opacity:.4}
 .big{width:100%;border:0;border-radius:16px;padding:18px;font:800 19px inherit;font-family:inherit;background:var(--lime);color:#14231a;margin-bottom:16px}
 .big.done{background:var(--card);color:var(--ink);border:2px solid var(--green)}
 .big.done.walk{border-color:var(--blue)}
+.big.done.football{border-color:var(--orange)}
 .stats{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:18px}
 .st{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:14px}
 .st b{display:block;font-size:30px;line-height:1.1}
@@ -44,10 +47,11 @@ h2{font-size:16px;margin:0 0 8px}
 .seg.z{background:var(--line);width:3px!important}
 .seg i{display:block;height:20px;line-height:20px;font-style:normal;font-size:11px;font-weight:700;color:#fff;text-align:center;white-space:nowrap;overflow:hidden;background:var(--green)}
 .seg i.w{background:var(--blue)}
+.seg i.f{background:var(--orange)}
 .seg i.m{background:#e5484d}
 .st.wide{grid-column:1/-1}
-.rl{display:flex;justify-content:space-between;margin:6px 0 10px}
-.rl b{display:inline;font-size:20px}
+.rl{display:flex;flex-wrap:wrap;gap:4px 14px;margin:6px 0 10px}
+.rl b{display:inline;font-size:17px}
 .seg.thick{height:14px;border-radius:7px}
 .seg.thick i{height:14px}
 .leg{font-size:13px;color:var(--mute);margin-bottom:8px}
@@ -60,6 +64,7 @@ h2{font-size:16px;margin:0 0 8px}
 .opt{display:block;width:100%;border:0;border-radius:14px;padding:16px;margin-bottom:8px;font-weight:700;font-size:17px;font-family:inherit;color:#fff}
 .opt.run{background:var(--green)}
 .opt.walk{background:var(--blue)}
+.opt.football{background:var(--orange)}
 .opt.clr{background:none;color:#d64545;border:1px solid var(--line)}
 .opt.cancel{background:var(--bg);color:var(--ink)}
 .bar em{font-style:normal;width:64px;color:var(--mute);text-transform:capitalize}
@@ -85,6 +90,8 @@ h2{font-size:16px;margin:0 0 8px}
 <div class="stats">
   <div class="st"><b id="sRun" style="color:var(--green)">0</b><span>пробежек за месяц</span></div>
   <div class="st"><b id="sWalk" style="color:var(--blue)">0</b><span>прогулок за месяц</span></div>
+  <div class="st"><b id="sFoot" style="color:var(--orange)">0</b><span>футбола за месяц</span></div>
+  <div class="st"><b id="sMiss" style="color:#e5484d">0</b><span>пропусков за месяц</span></div>
   <div class="st"><b id="sPct">0%</b><span>дней с активностью</span></div>
   <div class="st"><b id="sAll">0</b><span>активных дней</span></div>
   <div class="st"><b id="sStreak">0</b><span>серия сейчас</span></div>
@@ -92,12 +99,13 @@ h2{font-size:16px;margin:0 0 8px}
   <div class="st wide"><span>Соотношение за месяц</span><div id="ratio"></div></div>
 </div>
 <h2>Последние месяцы</h2>
-<div class="leg"><b style="background:var(--green)"></b>бег<b style="background:var(--blue)"></b>ходьба<b style="background:#e5484d"></b>пропуск</div>
+<div class="leg"><b style="background:var(--green)"></b>бег<b style="background:var(--blue)"></b>ходьба<b style="background:var(--orange)"></b>футбол<b style="background:#e5484d"></b>пропуск</div>
 <div id="hist"></div>
 </main>
 <div id="sheet"><div class="sh"><h3 id="shTitle"></h3>
 <button class="opt run" onclick="pick('run')">🏃 Бег</button>
 <button class="opt walk" onclick="pick('walk')">🚶 Ходьба</button>
+<button class="opt football" onclick="pick('football')">⚽ Футбол</button>
 <button class="opt clr" id="shClear" onclick="pick(null)">Убрать отметку</button>
 <button class="opt cancel" onclick="closeSheet()">Отмена</button></div></div>
 <script>
@@ -136,6 +144,10 @@ function streaks(){
 }
 function countMonth(y,m,type){let c=0;const n=new Date(y,m+1,0).getDate();
   for(let d=1;d<=n;d++){const a=acts[key(y,m,d)];if(a&&(!type||a===type))c++}return c}
+const LBL={run:'бег',walk:'ходьба',football:'футбол'};
+function pcts(a){const tot=a.reduce((x,y)=>x+y,0);if(!tot)return a.map(()=>0);
+  let last=-1;a.forEach((v,i)=>{if(v)last=i});let used=0;
+  return a.map((v,i)=>{if(!v)return 0;if(i===last)return 100-used;const p=Math.round(v/tot*100);used+=p;return p})}
 function render(){
   $('title').textContent=mname(vy,vm);
   const first=(new Date(vy,vm,1).getDay()+6)%7,n=new Date(vy,vm+1,0).getDate();
@@ -145,33 +157,35 @@ function render(){
     const fut=k>todayKey;
     h+='<button class="d'+(acts[k]?' '+acts[k]:(sk&&k>=sk&&k<todayKey?' miss':''))+(k===todayKey?' today':'')+(fut?' future':'')+'" data-k="'+k+'"'+(fut?' disabled':'')+'>'+d+'</button>'}
   $('cal').innerHTML=h;
-  const r=countMonth(vy,vm,'run'),w=countMonth(vy,vm,'walk'),c=r+w;
+  const r=countMonth(vy,vm,'run'),w=countMonth(vy,vm,'walk'),f=countMonth(vy,vm,'football'),c=r+w+f;
   const isCur=vy===now.getFullYear()&&vm===now.getMonth();
   const elapsed=isCur?now.getDate():n;
-  $('sRun').textContent=r;$('sWalk').textContent=w;$('sAll').textContent=c;
+  $('sRun').textContent=r;$('sWalk').textContent=w;$('sFoot').textContent=f;$('sAll').textContent=c;
   $('sPct').textContent=Math.round(c/elapsed*100)+'%';
-  if(c){const rp=Math.round(r/c*100),wp=100-rp;
-    $('ratio').innerHTML='<div class="rl"><b style="color:var(--green)">🏃 Бег '+rp+'%</b><b style="color:var(--blue)">🚶 Ходьба '+wp+'%</b></div><div class="seg thick">'+(r?'<i style="flex:'+r+'"></i>':'')+(w?'<i class="w" style="flex:'+w+'"></i>':'')+'</div>'}
+  if(c){const cnt=[r,w,f],pc=pcts(cnt);
+    const items=[['🏃 Бег','var(--green)',''],['🚶 Ходьба','var(--blue)','w'],['⚽ Футбол','var(--orange)','f']];
+    $('ratio').innerHTML='<div class="rl">'+items.map((x,i)=>cnt[i]?'<b style="color:'+x[1]+'">'+x[0]+' '+pc[i]+'%</b>':'').join('')+'</div><div class="seg thick">'+items.map((x,i)=>cnt[i]?'<i'+(x[2]?' class="'+x[2]+'"':'')+' style="flex:'+cnt[i]+'"></i>':'').join('')+'</div>'}
   else{$('ratio').innerHTML='<div class="rl"><b style="color:var(--mute)">Пока нет отметок</b></div>'}
   const[cur,best]=streaks();$('sStreak').textContent=cur;$('sBest').textContent=best;
   const t=acts[todayKey];
-  $('big').textContent=t?'✓ Сегодня: '+(t==='run'?'бег':'ходьба')+' (изменить)':'✓ Отметить сегодня';
+  $('big').textContent=t?(t==='football'?'⚽':'✓')+' Сегодня: '+(LBL[t]||t)+' (изменить)':'✓ Отметить сегодня';
   $('big').className='big'+(t?' done '+t:'');
   const startKey=Object.keys(acts).sort()[0]||null;
-  function mstat(y,m){const n=new Date(y,m+1,0).getDate();let r=0,w=0,x=0;
+  function mstat(y,m){const n=new Date(y,m+1,0).getDate();let r=0,w=0,f=0,x=0;
     for(let d=1;d<=n;d++){const k=key(y,m,d);if(k>todayKey)break;
-      if(acts[k]==='run')r++;else if(acts[k]==='walk')w++;
+      if(acts[k]==='run')r++;else if(acts[k]==='walk')w++;else if(acts[k]==='football')f++;
       else if(startKey&&k>=startKey&&k<todayKey)x++}
-    return[r,w,x]}
+    return[r,w,f,x]}
+  $('sMiss').textContent=mstat(vy,vm)[3];
   const rows=[];let max=1;
   for(let i=5;i>=0;i--){const dt=new Date(now.getFullYear(),now.getMonth()-i,1);
-    const st=mstat(dt.getFullYear(),dt.getMonth());max=Math.max(max,st[0]+st[1]+st[2]);
-    rows.push([dt.toLocaleDateString('ru-RU',{month:'short'}),st[0],st[1],st[2]])}
-  $('hist').innerHTML=rows.map(x=>{const tot=x[1]+x[2]+x[3];
+    const st=mstat(dt.getFullYear(),dt.getMonth());max=Math.max(max,st[0]+st[1]+st[2]+st[3]);
+    rows.push([dt.toLocaleDateString('ru-RU',{month:'short'}),st[0],st[1],st[2],st[3]])}
+  $('hist').innerHTML=rows.map(x=>{const tot=x[1]+x[2]+x[3]+x[4];
     if(!tot)return '<div class="bar"><em>'+x[0]+'</em><div class="seg z"></div><span>0</span></div>';
-    const rp=Math.round(x[1]/tot*100),wp=Math.round(x[2]/tot*100),mp=Math.max(0,100-rp-wp);
+    const pc=pcts([x[1],x[2],x[3],x[4]]);
     const part=(v,p,c)=>v?'<i'+(c?' class="'+c+'"':'')+' style="flex:'+v+'">'+p+'%</i>':'';
-    return '<div class="bar"><em>'+x[0]+'</em><div class="seg" style="width:'+(tot/max*60)+'%">'+part(x[1],rp,'')+part(x[2],wp,'w')+part(x[3],mp,'m')+'</div><span>'+(x[1]+x[2])+'</span></div>'}).join('');
+    return '<div class="bar"><em>'+x[0]+'</em><div class="seg" style="width:'+(tot/max*60)+'%">'+part(x[1],pc[0],'')+part(x[2],pc[1],'w')+part(x[3],pc[2],'f')+part(x[4],pc[3],'m')+'</div><span>'+(x[1]+x[2]+x[3])+'</span></div>'}).join('');
 }
 $('cal').onclick=e=>{const k=e.target.dataset&&e.target.dataset.k;if(k)openSheet(k)};
 $('big').onclick=()=>openSheet(todayKey);
