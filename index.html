@@ -27,7 +27,9 @@ h1{font-size:26px;margin:4px 0 14px;letter-spacing:-.5px}
 .d.run,.d.walk{color:#fff}
 .d.run{background:var(--green);border-color:var(--green)}
 .d.walk{background:var(--blue);border-color:var(--blue)}
-.d.run::after,.d.walk::after{content:"✓";position:absolute;right:5px;top:2px;font-size:11px}
+.d.miss{background:#e5484d;border-color:#e5484d;color:#fff}
+.d.run::after,.d.walk::after,.d.miss::after{content:"✓";position:absolute;right:5px;top:2px;font-size:11px}
+.d.miss::after{content:"✕"}
 .d.future{opacity:.4}
 .big{width:100%;border:0;border-radius:16px;padding:18px;font:800 19px inherit;font-family:inherit;background:var(--lime);color:#14231a;margin-bottom:16px}
 .big.done{background:var(--card);color:var(--ink);border:2px solid var(--green)}
@@ -137,10 +139,11 @@ function countMonth(y,m,type){let c=0;const n=new Date(y,m+1,0).getDate();
 function render(){
   $('title').textContent=mname(vy,vm);
   const first=(new Date(vy,vm,1).getDay()+6)%7,n=new Date(vy,vm+1,0).getDate();
+  const sk=Object.keys(acts).sort()[0]||null;
   let h='';for(let i=0;i<first;i++)h+='<div class="d empty"></div>';
   for(let d=1;d<=n;d++){const k=key(vy,vm,d);
     const fut=k>todayKey;
-    h+='<button class="d'+(acts[k]?' '+acts[k]:'')+(k===todayKey?' today':'')+(fut?' future':'')+'" data-k="'+k+'"'+(fut?' disabled':'')+'>'+d+'</button>'}
+    h+='<button class="d'+(acts[k]?' '+acts[k]:(sk&&k>=sk&&k<todayKey?' miss':''))+(k===todayKey?' today':'')+(fut?' future':'')+'" data-k="'+k+'"'+(fut?' disabled':'')+'>'+d+'</button>'}
   $('cal').innerHTML=h;
   const r=countMonth(vy,vm,'run'),w=countMonth(vy,vm,'walk'),c=r+w;
   const isCur=vy===now.getFullYear()&&vm===now.getMonth();
