@@ -76,13 +76,29 @@ h2{font-size:16px;margin:0 0 8px}
 #splash .ig{position:absolute;left:0;right:0;bottom:calc(40px + env(safe-area-inset-bottom,0px));display:flex;align-items:center;justify-content:center;gap:8px;font-size:16px;color:#cfd8d2;animation:sp .7s .5s ease both}
 @keyframes sp{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:none}}
 @media (prefers-reduced-motion:reduce){#splash *{animation:none!important}}
+#sky{position:fixed;inset:0;z-index:-1;overflow:hidden;background:var(--bg);transition:background 1s}
+#sky canvas{position:absolute;left:0;top:0}
+.ob{position:absolute;pointer-events:none}
+.sun{right:-50px;top:-50px;width:230px;height:230px;border-radius:50%;background:radial-gradient(circle,rgba(255,246,196,.95) 0,rgba(255,222,120,.5) 35%,rgba(255,222,120,0) 70%)}
+.moon{right:34px;top:calc(46px + env(safe-area-inset-top,0px));width:58px;height:58px;border-radius:50%;box-shadow:inset -16px 0 0 0 #f4f1dc;filter:drop-shadow(0 0 14px rgba(244,241,220,.55))}
+.cl{left:0;height:56px;border-radius:60px;background:rgba(255,255,255,.7);filter:blur(10px);animation:drift linear infinite}
+.cl.dk{background:rgba(52,62,78,.75)}
+@keyframes drift{from{transform:translateX(-300px)}to{transform:translateX(100vw)}}
+@media (prefers-reduced-motion:reduce){.cl{animation:none;left:20%}}
+#wx{font-size:14px;font-weight:600;margin:-8px 0 14px;min-height:18px}
+.sky-dark h1,.sky-dark h2,.sky-dark .nav b,.sky-dark .bar span,.sky-dark #wx{color:#fff}
+.sky-dark .dow,.sky-dark .leg,.sky-dark .bar em{color:#d5e2dc}
+.sky-light h1,.sky-light h2,.sky-light .nav b,.sky-light .bar span,.sky-light #wx{color:#14231a}
+.sky-light .dow,.sky-light .leg,.sky-light .bar em{color:#3b4b43}
 </style>
 </head>
 <body>
+<div id="sky"><canvas id="skyc"></canvas></div>
 <div id="splash"><img src="icon-192.png" alt=""><h2 id="spTitle"></h2><p id="spSub"></p>
 <div class="ig"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="url(#igg)" stroke-width="2" aria-hidden="true"><defs><linearGradient id="igg" x1="0" y1="1" x2="1" y2="0"><stop offset="0" stop-color="#fdc468"/><stop offset=".5" stop-color="#df4996"/><stop offset="1" stop-color="#4f5bd5"/></linearGradient></defs><rect x="3" y="3" width="18" height="18" rx="5"/><circle cx="12" cy="12" r="4"/><circle cx="17.5" cy="6.5" r="1" fill="url(#igg)" stroke="none"/></svg><span>@thedilshod_</span></div></div>
 <main>
 <h1>Трекер пробежек</h1>
+<div id="wx"></div>
 <button class="big" id="big"></button>
 <div class="nav"><button id="prev">‹</button><b id="title"></b><button id="next">›</button></div>
 <div class="grid" id="dows"></div>
@@ -201,6 +217,87 @@ render();
   const sp=$('splash');
   const close=()=>{sp.classList.add('hide');setTimeout(()=>sp.remove(),600)};
   sp.onclick=close;setTimeout(close,3000);
+})();
+
+/* ===== Фон по погоде в Худжанде (Open-Meteo, без ключа) ===== */
+function wxKind(c){
+  if(c===0||c===1)return['clear','ясно'];
+  if(c===2)return['cloud','переменная облачность'];
+  if(c===3)return['cloud','пасмурно'];
+  if(c===45||c===48)return['fog','туман'];
+  if(c>=51&&c<=57)return['rain','морось'];
+  if((c>=61&&c<=67)||(c>=80&&c<=82))return['rain',(c===65||c===82)?'сильный дождь':'дождь'];
+  if((c>=71&&c<=77)||c===85||c===86)return['snow','снег'];
+  if(c>=95)return['storm','гроза'];
+  return['cloud','облачно'];
+}
+(function(){
+  const LAT=40.2833,LON=69.6333;
+  const WG={day:{clear:['#3a8dde','#a5d6f7'],cloud:['#7d93a8','#c3d0da'],fog:['#b7c1c7','#dfe5e8'],rain:['#4b5d6e','#8d9eac'],snow:['#8aa0b3','#d6e1ea'],storm:['#2f3a47','#5c6a78']},
+            night:{clear:['#070b1d','#1c2a55'],cloud:['#10172b','#2a3348'],fog:['#1d2430','#3a4350'],rain:['#0c1220','#27354a'],snow:['#18222f','#3b4a5c'],storm:['#06080f','#1c2330']}};
+  const sky=$('sky'),cv=$('skyc'),ctx=cv.getContext('2d');
+  const reduce=window.matchMedia&&matchMedia('(prefers-reduced-motion: reduce)').matches;
+  let W=0,H=0,K='',night=false,mode='',parts=[],raf=0,flashAt=0,fl=0;
+  const dpr=Math.min(2,window.devicePixelRatio||1);
+  function size(){W=innerWidth;H=innerHeight;cv.width=W*dpr;cv.height=H*dpr;cv.style.width=W+'px';cv.style.height=H+'px';ctx.setTransform(dpr,0,0,dpr,0,0)}
+  function init(){
+    mode=(K==='rain'||K==='storm')?'rain':K==='snow'?'snow':(night&&(K==='clear'||K==='cloud'))?'stars':'';
+    const n=mode==='rain'?Math.round(W/3.2):mode==='snow'?Math.round(W/4.5):mode==='stars'?70:0;
+    parts=Array.from({length:n},()=>({x:Math.random()*W,y:Math.random()*H,l:12+Math.random()*10,v:mode==='rain'?13+Math.random()*7:.8+Math.random()*1.6,r:mode==='snow'?1.5+Math.random()*2.2:1+Math.random()*1.6,ph:Math.random()*6.28}));
+  }
+  function draw(t){
+    ctx.clearRect(0,0,W,H);
+    if(mode==='rain'){
+      ctx.strokeStyle=night?'rgba(170,190,225,.5)':'rgba(215,228,240,.65)';ctx.lineWidth=1.2;ctx.beginPath();
+      parts.forEach(p=>{ctx.moveTo(p.x,p.y);ctx.lineTo(p.x-p.l*.25,p.y+p.l);p.y+=p.v;p.x-=p.v*.25;if(p.y>H||p.x<0){p.y=-20;p.x=Math.random()*W*1.2}});
+      ctx.stroke();
+    }else if(mode==='snow'){
+      ctx.fillStyle='rgba(255,255,255,.92)';
+      parts.forEach(p=>{p.y+=p.v;p.x+=Math.sin(t/1200+p.ph)*.5;if(p.y>H){p.y=-5;p.x=Math.random()*W}ctx.beginPath();ctx.arc(p.x,p.y,p.r,0,6.283);ctx.fill()});
+    }else if(mode==='stars'){
+      parts.forEach(p=>{ctx.fillStyle='rgba(255,255,255,'+(.3+.55*Math.abs(Math.sin(t/1500+p.ph)))+')';ctx.fillRect(p.x,p.y,p.r,p.r)});
+    }
+    if(K==='storm'){
+      if(!flashAt)flashAt=t+4000+Math.random()*6000;
+      if(t>flashAt){fl=1;flashAt=0}
+      if(fl>0){ctx.fillStyle='rgba(255,255,255,'+fl*.35+')';ctx.fillRect(0,0,W,H);fl-=.06}
+    }
+  }
+  function loop(t){draw(t);raf=requestAnimationFrame(loop)}
+  function start(){cancelAnimationFrame(raf);if(reduce||(!mode&&K!=='storm')){draw(0);return}raf=requestAnimationFrame(loop)}
+  function show(d){
+    const k=wxKind(d.code);K=k[0];night=!d.day;
+    sky.style.background='linear-gradient(180deg,'+WG[night?'night':'day'][K].join(',')+')';
+    sky.querySelectorAll('.ob').forEach(n=>n.remove());
+    let h='';
+    if(K==='clear'&&!night)h+='<div class="ob sun"></div>';
+    if(night&&(K==='clear'||K==='cloud'))h+='<div class="ob moon"></div>';
+    const nc={clear:0,cloud:4,fog:3,rain:4,snow:3,storm:4}[K],dk=(K==='rain'||K==='storm');
+    for(let i=0;i<nc;i++)h+='<div class="ob cl'+(dk?' dk':'')+'" style="top:'+(8+i*13+(i%2)*6)+'%;width:'+(170+i*40)+'px;animation-duration:'+(60+i*25)+'s;animation-delay:-'+(i*17)+'s;opacity:'+(night?.2:dk?.55:.75)+'"></div>';
+    sky.insertAdjacentHTML('afterbegin',h);
+    const b=document.body;b.classList.remove('sky-dark','sky-light');
+    b.classList.add(night||dk?'sky-dark':'sky-light');
+    $('wx').textContent='Худжанд'+(d.temp!=null?' · '+Math.round(d.temp)+'°':'')+' · '+k[1];
+    size();init();start();
+  }
+  async function load(){
+    let d=null;
+    try{const c=JSON.parse(localStorage.getItem('wx-cache')||'null');if(c&&Date.now()-c.t<1800000)d=c.d}catch(e){}
+    if(!d){
+      try{
+        const ctl=new AbortController();setTimeout(()=>ctl.abort(),7000);
+        const r=await fetch('https://api.open-meteo.com/v1/forecast?latitude='+LAT+'&longitude='+LON+'&current=temperature_2m,weather_code,is_day&timezone=auto',{signal:ctl.signal});
+        const j=await r.json();
+        d={code:j.current.weather_code,day:j.current.is_day,temp:j.current.temperature_2m};
+        try{localStorage.setItem('wx-cache',JSON.stringify({t:Date.now(),d}))}catch(e){}
+      }catch(e){}
+    }
+    if(!d){const hr=new Date().getHours();d={code:0,day:(hr>=6&&hr<19)?1:0,temp:null}}
+    show(d);
+  }
+  addEventListener('resize',()=>{size();init();start()});
+  document.addEventListener('visibilitychange',()=>{document.hidden?cancelAnimationFrame(raf):start()});
+  load();setInterval(load,1800000);
 })();
 if("serviceWorker" in navigator){navigator.serviceWorker.register("sw.js").catch(()=>{})}
 </script>
